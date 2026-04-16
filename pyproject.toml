@@ -1,0 +1,36 @@
+[project]
+name = "training-optimization"
+version = "0.1.0"
+description = "Personal training optimization focused on progression"
+requires-python = ">=3.10"
+dependencies = [
+    "fitparse>=1.2.0",
+    "numpy>=1.24.0",
+    "pandas>=2.0.0",
+    "click>=8.1.0",
+    "rich>=13.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.1.0",
+]
+
+[project.scripts]
+trainopt = "training_optimization.cli:main"
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

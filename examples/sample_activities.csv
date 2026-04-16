@@ -1,0 +1,9 @@
+Activity ID,Activity Date,Activity Name,Activity Type,Activity Description,Elapsed Time,Distance,Max Heart Rate,Relative Effort,Commute,Activity Private Note,Activity Gear,Filename,Athlete Weight,Bike Weight,Elapsed Time,Moving Time,Distance,Max Speed,Average Speed,Elevation Gain,Elevation Loss,Elevation Low,Elevation High,Max Grade,Average Grade,Average Positive Grade,Average Negative Grade,Max Cadence,Average Cadence,Max Heart Rate,Average Heart Rate,Max Watts,Average Watts,Calories
+1001,"Mar 1, 2026, 10:00:00 AM",Easy 8km,Run,,2880,8.0,170.0,,false,,,activities/1001.gpx,,,2880.0,2880.0,8000.0,3.5,2.78,50,50,0,100,2,0,,,,,,170.0,150.0,,,400
+1002,"Mar 3, 2026, 10:00:00 AM",3x10min intervals,Run,,3600,10.0,195.0,,false,,,activities/1002.gpx,,,3600.0,3600.0,10000.0,5.0,2.78,80,80,0,150,3,0,,,,,,195.0,175.0,,,550
+1003,"Mar 8, 2026, 10:00:00 AM",Long run 16km,Run,,5700,16.0,180.0,,false,,,activities/1003.gpx,,,5700.0,5700.0,16000.0,3.5,2.80,150,150,0,200,4,0,,,,,,180.0,160.0,,,900
+1004,"Mar 10, 2026, 10:00:00 AM",Tempo 10km,Run,,3300,10.0,190.0,,false,,,activities/1004.gpx,,,3300.0,3300.0,10000.0,4.5,3.03,80,80,0,150,3,0,,,,,,190.0,175.0,,,550
+1005,"Mar 12, 2026, 10:00:00 AM",Sykkel sone 1,Ride,,3600,30.0,140.0,,false,,,activities/1005.gpx,,,3600.0,3600.0,30000.0,,,100,100,,,,,,,,140.0,120.0,,,500
+1006,"Mar 15, 2026, 10:00:00 AM",Long run 18km,Run,,6300,18.0,180.0,,false,,,activities/1006.gpx,,,6300.0,6300.0,18000.0,3.5,2.86,200,200,0,250,4,0,,,,,,180.0,162.0,,,1000
+1007,"Mar 17, 2026, 10:00:00 AM",Progressive tempo,Run,,3600,11.0,195.0,,false,,,activities/1007.gpx,,,3600.0,3600.0,11000.0,5.0,3.06,80,80,0,150,3,0,,,,,,195.0,178.0,,,600
+1008,"Mar 20, 2026, 10:00:00 AM",Easy recovery,Run,,2400,6.0,160.0,,false,,,activities/1008.gpx,,,2400.0,2400.0,6000.0,3.0,2.50,50,50,0,100,2,0,,,,,,160.0,140.0,,,300
