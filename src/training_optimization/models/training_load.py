@@ -109,13 +109,31 @@ def compute_load_history(
     return history
 
 
-def current_load_state(activities: list[Activity], as_of: datetime) -> LoadState:
-    """Get current CTL/ATL/TSB as of a specific date."""
-    history = compute_load_history(activities)
+def current_load_state(
+    activities: list[Activity], as_of: datetime, ctl_tau: int = 42, atl_tau: int = 7
+) -> LoadState:
+    """Get current CTL/ATL/TSB as of a specific date.
+
+    Decay is propagated forward to `as_of` even when the latest activity is older,
+    so a rest gap correctly lowers ATL and raises TSB.
+    """
+    history = compute_load_history(activities, ctl_tau=ctl_tau, atl_tau=atl_tau)
     target = as_of.date()
 
-    # Find the latest state at or before target date
     candidates = [h for h in history if h.as_of <= target]
     if not candidates:
         return LoadState(as_of=target, ctl=0, atl=0, tsb=0)
-    return candidates[-1]
+
+    latest = candidates[-1]
+    if latest.as_of >= target:
+        return latest
+
+    # Propagate decay forward (no new load) until target date
+    ctl_decay = exp(-1 / ctl_tau)
+    atl_decay = exp(-1 / atl_tau)
+    ctl, atl = latest.ctl, latest.atl
+    gap_days = (target - latest.as_of).days
+    for _ in range(gap_days):
+        ctl *= ctl_decay
+        atl *= atl_decay
+    return LoadState(as_of=target, ctl=ctl, atl=atl, tsb=ctl - atl)
