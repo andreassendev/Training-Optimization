@@ -3,6 +3,7 @@
 from datetime import datetime, timedelta
 
 from training_optimization.models.activity import Activity, ActivityType, Lap
+from training_optimization.models.readiness import ReadinessScore
 from training_optimization.optimizers.workout_recommender import (
     WorkoutKind,
     recommend_next_workout,
@@ -118,6 +119,61 @@ def test_peak_block_cross_train_day_after_quality():
     race_date = datetime(2026, 4, 15) + timedelta(days=20)
     rec = recommend_next_workout(activities, datetime(2026, 4, 15), race_date)
     assert rec.kind in {WorkoutKind.CROSS_TRAIN, WorkoutKind.EASY_RUN, WorkoutKind.RECOVERY}
+
+
+def test_low_readiness_downgrades_hard_session_to_easy():
+    # Setup that would normally recommend a quality session
+    activities = [
+        _run(3, 14, 84),
+        _run(6, 6, 36),
+        _run(9, 6, 36),
+    ]
+    race_date = datetime(2026, 4, 15) + timedelta(days=17)
+    readiness = ReadinessScore(
+        as_of=datetime(2026, 4, 15), score=45.0, days_since_hard=3, notes=("HRV -12%",)
+    )
+    rec = recommend_next_workout(activities, datetime(2026, 4, 15), race_date, readiness)
+    assert rec.kind == WorkoutKind.EASY_RUN
+    assert "Readiness" in rec.reason
+
+
+def test_very_low_readiness_forces_recovery():
+    activities = [
+        _run(3, 14, 84),
+        _run(6, 6, 36),
+        _run(9, 6, 36),
+    ]
+    race_date = datetime(2026, 4, 15) + timedelta(days=17)
+    readiness = ReadinessScore(
+        as_of=datetime(2026, 4, 15), score=25.0, days_since_hard=3, notes=("Sick",)
+    )
+    rec = recommend_next_workout(activities, datetime(2026, 4, 15), race_date, readiness)
+    assert rec.kind == WorkoutKind.RECOVERY
+
+
+def test_race_day_not_downgraded_by_low_readiness():
+    activities = [_run(i + 1, 8, 45) for i in range(0, 14)]
+    race_date = datetime(2026, 4, 15)
+    readiness = ReadinessScore(
+        as_of=datetime(2026, 4, 15), score=20.0, days_since_hard=5, notes=("Nervous",)
+    )
+    rec = recommend_next_workout(activities, datetime(2026, 4, 15), race_date, readiness)
+    # Race day: never downgrade, trust the training
+    assert rec.kind == WorkoutKind.RACE_PACE
+
+
+def test_high_readiness_preserves_hard_session():
+    activities = [
+        _run(3, 14, 84),
+        _run(6, 6, 36),
+        _run(9, 6, 36),
+    ]
+    race_date = datetime(2026, 4, 15) + timedelta(days=17)
+    readiness = ReadinessScore(
+        as_of=datetime(2026, 4, 15), score=92.0, days_since_hard=3, notes=("All green",)
+    )
+    rec = recommend_next_workout(activities, datetime(2026, 4, 15), race_date, readiness)
+    assert rec.kind == WorkoutKind.RACE_PACE
 
 
 def test_beyond_peak_block_falls_through_to_general_rules():

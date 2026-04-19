@@ -20,6 +20,7 @@ from enum import Enum
 
 from training_optimization.models.activity import Activity
 from training_optimization.models.fitness_state import FitnessState, compute_fitness_state
+from training_optimization.models.readiness import ReadinessScore
 from training_optimization.models.training_load import LoadState, current_load_state
 
 
@@ -44,10 +45,44 @@ class Recommendation:
     notes: str = ""
 
 
+_HARD_KINDS = frozenset(
+    {WorkoutKind.INTERVALS, WorkoutKind.TEMPO, WorkoutKind.RACE_PACE, WorkoutKind.LONG_RUN}
+)
+
+
 def _days_until_race(as_of: datetime, race_date: datetime | None) -> int | None:
     if race_date is None:
         return None
     return (race_date.date() - as_of.date()).days
+
+
+def _downgrade_for_readiness(
+    rec: Recommendation, readiness: ReadinessScore, days_to_race: int | None
+) -> Recommendation:
+    """Soften a hard recommendation if readiness is low.
+
+    Race day (0 days out) is never downgraded — the athlete trusts the plan.
+    """
+    if days_to_race == 0:
+        return rec
+    if rec.kind not in _HARD_KINDS:
+        return rec
+
+    if readiness.score < 30:
+        return Recommendation(
+            kind=WorkoutKind.RECOVERY,
+            reason=f"Readiness {readiness.score:.0f}/100 ({readiness.zone}) — rest over planned {rec.kind.value}",
+            notes=" | ".join(readiness.notes) if readiness.notes else rec.notes,
+        )
+    if readiness.score < 50:
+        return Recommendation(
+            kind=WorkoutKind.EASY_RUN,
+            target_distance_km=6,
+            target_pace_s_per_km=360,
+            reason=f"Readiness {readiness.score:.0f}/100 ({readiness.zone}) — easy over planned {rec.kind.value}",
+            notes=" | ".join(readiness.notes) if readiness.notes else rec.notes,
+        )
+    return rec
 
 
 def _taper_recommendation(
@@ -205,17 +240,11 @@ def _peak_block_recommendation(
     )
 
 
-def recommend_next_workout(
-    activities: list[Activity],
-    as_of: datetime,
-    race_date: datetime | None = None,
+def _base_recommendation(
+    fitness: FitnessState,
+    load: LoadState,
+    days_to_race: int | None,
 ) -> Recommendation:
-    """Recommend the next workout based on current state and goals."""
-    fitness = compute_fitness_state(activities, as_of)
-    load = current_load_state(activities, as_of)
-
-    days_to_race = _days_until_race(as_of, race_date)
-
     # Taper logic overrides everything
     if days_to_race is not None and 0 <= days_to_race <= 14:
         taper = _taper_recommendation(days_to_race, fitness, load)
@@ -287,3 +316,25 @@ def recommend_next_workout(
         target_pace_s_per_km=360,
         reason="Maintain aerobic base between quality sessions",
     )
+
+
+def recommend_next_workout(
+    activities: list[Activity],
+    as_of: datetime,
+    race_date: datetime | None = None,
+    readiness: ReadinessScore | None = None,
+) -> Recommendation:
+    """Recommend the next workout based on current state and goals.
+
+    Readiness (if provided) can downgrade hard sessions but never on race day.
+    """
+    fitness = compute_fitness_state(activities, as_of)
+    load = current_load_state(activities, as_of)
+    days_to_race = _days_until_race(as_of, race_date)
+
+    rec = _base_recommendation(fitness, load, days_to_race)
+
+    if readiness is not None:
+        rec = _downgrade_for_readiness(rec, readiness, days_to_race)
+
+    return rec
